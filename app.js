@@ -9,6 +9,11 @@ var url;
 var response;
 var inputParam;
 
+var whiteList=[
+  "GAg9Zs9XUPY6yts83RvjV9w6VKt1", //aaa
+  "FzE2XLA5fGY9gvEZfbyKEkFEnLt1", //curves
+];
+
 console.log("Version:", version);
 
 // express 設定開始
@@ -29,11 +34,22 @@ app.get('/', function (req, res) {
 
   // 若無 API 參數，無效退出
   if (typeof inputParam.API == "undefined") {
-    console.log("Error: No API Specified");
-    response.send("Error: No API Specified");
+    console.log("Error: No API nor Access Specified");
+    response.send("Error: No API nor Access Specified");
     return 0;
-  }    
+  } 
   
+  // 若非 WhiteList access，無效退出
+  var accessInWhiteList = false;
+  for (var i=0; i< whiteList.length; i++) {
+      //console.log(inputParam.Access,i,whiteList[i]);    
+    if (inputParam.Access == whiteList[i]) {
+      accessInWhiteList = true;
+      break;
+    }     
+  }
+  
+  console.log("access", accessInWhiteList);
   // 處理 API
   //   API:00 ECHO 讓 ping process 來 keep alive
   switch(inputParam.API) {
@@ -42,9 +58,15 @@ app.get('/', function (req, res) {
       response.send("ECHO");
       break;      
     case "01":
-      console.log("呼叫 API:00 讀取訂單", inputParam.Order_NO);
-      getCurvesOrder();
-      break;
+      console.log("呼叫 API:01 讀取訂單", inputParam.Order_NO);
+      if (accessInWhiteList==false){
+        console.log("Error: No access");
+        response.send("Error: No access");
+        return 0;
+      } else {  
+        getCurvesOrder();
+        break;
+      }
     default:
       console.log("呼叫 未知API:"+inputParam.API);
       response.send("呼叫 未知API:"+inputParam.API);
