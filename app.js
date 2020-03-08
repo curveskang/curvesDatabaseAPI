@@ -52,6 +52,8 @@ app.get('/', function (req, res) {
   console.log("access", accessInWhiteList);
   // 處理 API
   //   API:00 ECHO 讓 ping process 來 keep alive
+  //   API:01 讀取訂單
+  //   API:10 更新訂單
   switch(inputParam.API) {
     case "00":
       console.log("呼叫 API:00 ECHO");
@@ -67,6 +69,16 @@ app.get('/', function (req, res) {
         getCurvesOrder();
         break;
       }
+    case "10":
+      console.log("呼叫 API:更新訂單", inputParam.Update_Order);
+      if (accessInWhiteList==false){
+        console.log("Error: No access");
+        response.send("Error: No access");
+        return 0;
+      } else {  
+        putCurvesOrder();
+        break;
+      }      
     default:
       console.log("呼叫 未知API:"+inputParam.API);
       response.send("呼叫 未知API:"+inputParam.API);
@@ -100,3 +112,37 @@ function getCurvesOrder() {
   
 }
 
+function putCurvesOrder() {
+  // 檢查 Order_NO
+  //console.log(inputParam);
+  if (inputParam.Update_Order == undefined) {
+    console.error('API:10 error:', "未指定 Update_Order"); 
+    response.send('API:10 未指定 Update_Order');
+    return 1;
+  }
+  
+  url = "http://garytest123.azurewebsites.net/api/HC_Order_Main_Update?Code=debug123";  
+
+  //console.log(inputParam.Update_Order);
+  var requestData = JSON.parse(inputParam.Update_Order);
+
+  //console.log(requestData);
+  
+  // fire request
+  request({
+    url: url,
+    method: "PUT",
+    json: requestData
+  }, function (error, res, body) {
+    if (!error && res.statusCode === 200) {
+      console.log(body);
+      response.send("API:10 取得"+JSON.stringify(body));
+    } else {
+      console.log("error: " + error)
+      console.log("res.statusCode: " + response.statusCode)
+      console.log("res.statusText: " + response.statusText)
+      response.send("API:10 失敗"+JSON.stringify(body));
+    }
+  }) 
+  
+}
