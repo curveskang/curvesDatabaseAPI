@@ -1,4 +1,4 @@
-var version ="V0.1";
+var version ="V0.9";
 
 var express = require('express');
 var request = require("request");
@@ -9,12 +9,19 @@ var url;
 var response;
 var inputParam;
 
-var whiteList=[
+var testerList=[
   "GAg9Zs9XUPY6yts83RvjV9w6VKt1", //aaa
+];
+
+var adminsList=[
   "FzE2XLA5fGY9gvEZfbyKEkFEnLt1", //curves
 ];
 
 console.log("Version:", version);
+
+var usingTestDatabase = false;
+var accessInTesterList = false;
+var accessInAdminsList = false;
 
 // express 設定開始
 app.use(function (req, res, next) {
@@ -32,24 +39,40 @@ app.get('/', function (req, res) {
   inputParam = req.query;
   response = res;
 
-  // 若無 API 參數，無效退出
-  if (typeof inputParam.API == "undefined") {
-    console.log("Error: No API nor Access Specified");
-    response.send("Error: No API nor Access Specified");
-    return 0;
-  } 
-  
-  // 若非 WhiteList access，無效退出
-  var accessInWhiteList = false;
-  for (var i=0; i< whiteList.length; i++) {
-      //console.log(inputParam.Access,i,whiteList[i]);    
-    if (inputParam.Access == whiteList[i]) {
-      accessInWhiteList = true;
+  // 檢查 UID 是否是 tester 
+  accessInTesterList = false;
+  for (var i=0; i< testerList.length; i++) {
+      //console.log(inputParam.Access,i,testerList[i]);    
+    if (inputParam.UID == testerList[i]) {
+      accessInTesterList = true;
       break;
     }     
   }
   
-  console.log("access", accessInWhiteList);
+  // 檢查 UID 是否是 admin
+  accessInAdminsList = false;
+  for (var i=0; i< adminsList.length; i++) {
+      //console.log(inputParam.Access,i,adminsList[i]);    
+    if (inputParam.UID == adminsList[i]) {
+      accessInAdminsList = true;
+      break;
+    }     
+  }  
+   
+  console.log("test:", accessInTesterList, "admin:", accessInAdminsList);
+  // Check if using Test database
+  usingTestDatabase = (accessInAdminsList)?false:true;
+  console.log("Using test database:", usingTestDatabase);
+  
+  
+  // 若無 API 參數，無效退出
+  if (typeof inputParam.API == "undefined") {
+    console.log("Error: No API Specified");
+    response.send("Error: No API Specified");
+    return 0;
+  }
+  
+  console.log("access", accessInTesterList);
   // 處理 API
   //   API:00 ECHO 讓 ping process 來 keep alive
   //   API:01 讀取訂單
@@ -61,7 +84,7 @@ app.get('/', function (req, res) {
       break;      
     case "01":
       console.log("呼叫 API:01 讀取訂單", inputParam.Order_NO);
-      if (accessInWhiteList==false){
+      if ((accessInTesterList==false) && (accessInAdminsList==false)) {
         console.log("Error: No access");
         response.send("Error: No access");
         return 0;
@@ -70,8 +93,8 @@ app.get('/', function (req, res) {
         break;
       }
     case "10":
-      console.log("呼叫 API:更新訂單", inputParam.Update_Order);
-      if (accessInWhiteList==false){
+      console.log("呼叫 API10:更新訂單", inputParam.Update_Order);
+      if ((accessInTesterList==false) && (accessInAdminsList==false)) {
         console.log("Error: No access");
         response.send("Error: No access");
         return 0;
@@ -96,10 +119,15 @@ function getCurvesOrder() {
     return 1;
   }
 
-//  url = "https://cvoscloud.azurewebsites.net/api/HC_Order_Main?OrderNo=A161000436&Code=debug123&VM=false"; 
-  url = "https://cvoscloud.azurewebsites.net/api/HC_Order_Main?OrderNo="+inputParam.Order_NO+"&Code=debug123&VM=false"; 
-
-  request(url, function (error, res, body) {
+  //  url = "https://cvoscloud.azurewebsites.net/api/HC_Order_Main?OrderNo=A161000436&Code=debug123&VM=false"; 
+  var urlCurvesGet = "https://cvoscloud.azurewebsites.net/api/HC_Order_Main?OrderNo="+inputParam.Order_NO+"&Code=debug123&VM=false"; 
+  var urlTestGet   = "https://garytest123.azurewebsites.net/api/HC_Order_Main?OrderNo="+inputParam.Order_NO+"&Code=debug123&VM=false"; 
+  var urlGet = (usingTestDatabase)?urlTestGet:urlCurvesGet; 
+  
+  var databaseMessage = (usingTestDatabase)?"GET:使用測試 Database":"GET:使用正式 Database"; 
+  console.log(databaseMessage);
+  
+  request(urlGet, function (error, res, body) {
     if (error!=null) {
       console.error('error:', error); 
       response.send('API:01 訂單讀取失敗');
@@ -121,8 +149,18 @@ function putCurvesOrder() {
     return 1;
   }
   
-  url = "http://garytest123.azurewebsites.net/api/HC_Order_Main_Update?Code=debug123";  
-
+  if (usingTestDatabase==false) {
+    console.log("正式資料庫寫入尚未開放");
+    response.send("正式資料庫寫入尚未開放");
+  }
+  
+  var urlCurvesPut = "尚未開放";
+  var urlTestPut   = "http://garytest123.azurewebsites.net/api/HC_Order_Main_Update?Code=debug123";  
+  var urlPut = (usingTestDatabase)?urlTestPut:urlCurvesPut; 
+  
+  var databaseMessage = (usingTestDatabase)?"PUT:使用測試資料庫":"PUT:使用正式資料庫"; 
+  console.log(databaseMessage);
+  
   //console.log(inputParam.Update_Order);
   var requestData = JSON.parse(inputParam.Update_Order);
 
@@ -130,18 +168,18 @@ function putCurvesOrder() {
   
   // fire request
   request({
-    url: url,
+    url: urlPut,
     method: "PUT",
     json: requestData
   }, function (error, res, body) {
     if (!error && res.statusCode === 200) {
       console.log(body);
-      response.send("API:10 取得"+JSON.stringify(body));
+      response.send(databaseMessage+"API:10 取得"+JSON.stringify(body));
     } else {
-      console.log("error: " + error)
-      console.log("res.statusCode: " + response.statusCode)
-      console.log("res.statusText: " + response.statusText)
-      response.send("API:10 失敗"+JSON.stringify(body));
+      console.log(error)
+//      console.log("res.statusCode: " + response.statusCode)
+//      console.log("res.statusText: " + response.statusText)
+      response.send(databaseMessage+"API:10 失敗");
     }
   }) 
   
