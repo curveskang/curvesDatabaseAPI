@@ -140,6 +140,9 @@ function getCurvesOrder() {
   
 }
 
+
+aaa = '{"id":"550917ec-3067-49b6-b748-c287b2bc1e35","tableType":1,"order_No":"A161000435","previous_Order_No":"A161000037","sold_Franchise_Code":"A161","sold_Franchise_Name":"石牌店","belonging_Franchise_Code":"A161","belonging_Franchise_Name":"石牌店","member_No":"A161002667","member_Name":"游育慎","mobile_No":"0927299862","monthly_Shipment_Date":20,"order_Date":"2019-11-12T00:00:00","firstShippingMonth":"2019-11-01T00:00:00","coach_Name":"Zero","birthday":"1973-05-20T00:00:00","email_Address":"snowarykimo@yahoo.com.tw","receiver_Name":"洪裴璞","receiver_TEL":"0921125713","receiver_Zip_Code":"112","receiver_City":"","receiver_Town":"","receiver_Address":"台北市北投區寶踐街48巷12號4樓11","member_Type":"有效","fourIn1_Number":5,"lemon_Number":0,"matcha_Number":0,"sesame_Number":0,"pumpkinPeanut_Number":0,"tieguanyin_Number":1,"protein_Recurring_Number":2,"protein_Monthly_Charge":2760,"probiotics_Recurring_Number":0,"probiotics_Monthly_Charge":0,"credit_Card":true,"bank_Transfer":false,"credit_Card_No":"4311951805978103","credit_Card_Period":"2024-04-30T00:00:00","as_Member_Data":false,"credit_Card_Relation":"本人","credit_Card_Sign":null,"protein_Bank_Transfer_People":2,"protein_Bank_Transfer_Charge":33120,"probiotics_Bank_Transfer_People":0,"probiotics_Bank_Transfer_Charge":0,"bank_Transfer_Date":"2001-01-01T00:00:00","bank_Transfer_No":"","depositor_Without_Bankbook_Name":"","confirm_Terms":true,"two_Copies_Invoice":true,"e_Invoice_Vehicle_No":"","e_Invoice_Vehicle_Type":"E-mail寄送","three_Copies_Invoice":false,"tax_ID_Number":"","invoice_Title":"","notice_1":false,"notice_2":false,"notice_3":false,"notice_4":false,"notice_5":false,"notice_6":false,"time_FA":false,"time_FWO":false,"time_2W":false,"time_1WM":false,"time_2_3WM":false,"time_Over_3WM":true,"tools_BK":false,"tools_OpenL":false,"tools_ReservedL":false,"tools_PT":false,"tools_DM":false,"tools_None":true,"order_Sign":null,"order_Remark":"","order_Status":"Z","submission_Date":"2019-11-12T13:09:39","approved_Date":"2019-11-13T10:13:39.6043508+08:00","approved":false,"funtion_Code":"","created_Date":"0001-01-01T00:00:00","creator_ID":"","creator_Name":"","出貨時間歷史記錄":["2019-11-20T00:00:00"],"suspend_Protein":false,"suspend_Probiotics":false,"suspend_Reason":"","suspend_Start_Month":"0001-01-01T00:00:00","suspend_End_Month":"0001-01-01T00:00:00","suspend_Confirm_Terms":false,"recovery_Shipment_Month":"0001-01-01T00:00:00","recovery_Shipment_Day":"0001-01-01T00:00:00","cancel_Reason_Protein":"","cancel_Confirm_Terms_Protein":false,"last_Shipment_Date_Protein":"0001-01-01T00:00:00","cancel_Reason_Probiotics":"","cancel_Confirm_Terms_Probiotics":false,"last_Shipment_Date_Probiotics":"0001-01-01T00:00:00","最後刷卡時間":"2019-11-18T00:00:00","single_Delivery_Box":0,"import_Order_No":"","import_Time":"2019-12-03T10:34:33.3987032+08:00","is_Import":false,"import_Ship_History":["2019-11-20T00:00:00"],"protein_Sold_Count":0,"probiotics_Sold_Count":0,"serverUpdateTime":"0001-01-01T00:00:00"}';
+
 function putCurvesOrder() {
   // 檢查 Order_NO
   //console.log(inputParam);
@@ -162,15 +165,26 @@ function putCurvesOrder() {
   console.log(databaseMessage);
   
   //console.log(inputParam.Update_Order);
-  var requestData = JSON.parse(inputParam.Update_Order);
+  //var requestData = JSON.parse(inputParam.Update_Order);
+  bbb = inputParam.Update_Order;
+  console.log("aaa:", aaa.length, "bbb:", bbb.length);
+  
+  for (var i=0; i< aaa.length; i++) {
+    if (aaa[i]!=bbb[i]) console.log(i," ", aaa[i], ":", bbb[i]);
+  }
+  var requestData = JSON.parse(bbb);
 
   //console.log(requestData);
+
   
   // fire request
+  var headersOpt = {  
+    "content-type": "application/json",
+  };
   request({
     url: urlPut,
-    method: "PUT",
-    json: requestData
+    method: "PUT",    
+    json: requestData,
   }, function (error, res, body) {
     if (!error && res.statusCode === 200) {
       console.log(body);
